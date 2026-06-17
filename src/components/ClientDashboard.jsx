@@ -82,18 +82,29 @@ export default function ClientDashboard({ client, onUpdateClient, workers, curre
           type = 'holidayIrrenunciable'
         }
         
-        const payment = base * multiplier
+        let payment = base * multiplier
+        if (shift.isPartial && shift.totalHours > 0) {
+          payment = payment * (shift.workedHours / shift.totalHours)
+        }
+
         revenue += payment
         
         breakdownData[type].count += 1
         breakdownData[type].total += payment
-        breakdownData[type].days.push(parseInt(shift.date.split('-')[2], 10))
+        const dayNum = parseInt(shift.date.split('-')[2], 10)
+        breakdownData[type].days.push({ 
+          num: dayNum, 
+          label: shift.isPartial ? `${dayNum} (${shift.workedHours}/${shift.totalHours}h)` : `${dayNum}` 
+        })
         
         shiftsList.push({
           id: shift.id,
           date: shift.date,
           type: shift.holidayType,
-          payment: payment
+          payment: payment,
+          isPartial: shift.isPartial,
+          workedHours: shift.workedHours,
+          totalHours: shift.totalHours
         })
       })
     })
@@ -182,6 +193,7 @@ export default function ClientDashboard({ client, onUpdateClient, workers, curre
                 type="number" 
                 value={currentQuota} 
                 onChange={handleQuotaChange} 
+                onFocus={(e) => e.target.select()}
                 style={{ width: '100%' }}
               />
             </div>
@@ -192,6 +204,7 @@ export default function ClientDashboard({ client, onUpdateClient, workers, curre
                 name="weekday" 
                 value={currentRates.weekday} 
                 onChange={handleRateChange} 
+                onFocus={(e) => e.target.select()}
                 style={{ width: '100%' }}
               />
             </div>
@@ -202,6 +215,7 @@ export default function ClientDashboard({ client, onUpdateClient, workers, curre
                 name="weekend" 
                 value={currentRates.weekend} 
                 onChange={handleRateChange} 
+                onFocus={(e) => e.target.select()}
                 style={{ width: '100%' }}
               />
             </div>

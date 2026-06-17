@@ -8,7 +8,8 @@ const InvoiceTemplate = forwardRef(({ client, agencySettings, breakdown, totalRe
   const tableData = []
     
   if (breakdown.normal.count > 0) {
-    const daysStr = [...new Set(breakdown.normal.days)].sort((a,b) => a - b).join(', ')
+    const uniqueDays = Array.from(new Map(breakdown.normal.days.map(d => [d.label, d])).values())
+    const daysStr = uniqueDays.sort((a,b) => a.num - b.num).map(d => d.label).join(', ')
     tableData.push({
       desc: `Turnos Normales (${breakdown.normal.count})`,
       details: `Días: ${daysStr}`,
@@ -17,7 +18,8 @@ const InvoiceTemplate = forwardRef(({ client, agencySettings, breakdown, totalRe
   }
   
   if (breakdown.holidayNormal.count > 0) {
-    const daysStr = [...new Set(breakdown.holidayNormal.days)].sort((a,b) => a - b).join(', ')
+    const uniqueDays = Array.from(new Map(breakdown.holidayNormal.days.map(d => [d.label, d])).values())
+    const daysStr = uniqueDays.sort((a,b) => a.num - b.num).map(d => d.label).join(', ')
     tableData.push({
       desc: `Feriados Normales (${breakdown.holidayNormal.count})`,
       details: `Días: ${daysStr}`,
@@ -26,7 +28,8 @@ const InvoiceTemplate = forwardRef(({ client, agencySettings, breakdown, totalRe
   }
   
   if (breakdown.holidayIrrenunciable.count > 0) {
-    const daysStr = [...new Set(breakdown.holidayIrrenunciable.days)].sort((a,b) => a - b).join(', ')
+    const uniqueDays = Array.from(new Map(breakdown.holidayIrrenunciable.days.map(d => [d.label, d])).values())
+    const daysStr = uniqueDays.sort((a,b) => a.num - b.num).map(d => d.label).join(', ')
     tableData.push({
       desc: `Feriados Irrenunc. (${breakdown.holidayIrrenunciable.count})`,
       details: `Días: ${daysStr}`,

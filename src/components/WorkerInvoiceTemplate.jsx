@@ -5,12 +5,15 @@ const WorkerInvoiceTemplate = forwardRef(({ workerName, shifts, totalPayment, mo
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount)
   }
 
-  const getHolidayLabel = (type) => {
-    switch(type) {
-      case 'normal': return 'Feriado Normal (+30%)'
-      case 'irrenunciable': return 'Feriado Irrenunciable (+100%)'
-      default: return 'Día Normal'
+  const getHolidayLabel = (shift) => {
+    let label = 'Día Normal'
+    if (shift.holidayType === 'normal') label = 'Feriado Normal (+30%)'
+    if (shift.holidayType === 'irrenunciable') label = 'Feriado Irrenunciable (+100%)'
+
+    if (shift.isPartial) {
+      label += ` (${shift.workedHours}/${shift.totalHours} hrs)`
     }
+    return label
   }
 
   // Estilos de la plantilla
@@ -206,7 +209,7 @@ const WorkerInvoiceTemplate = forwardRef(({ workerName, shifts, totalPayment, mo
             <tr key={idx}>
               <td style={styles.td}>{shift.date}</td>
               <td style={styles.td}>{shift.isWeekend ? 'Fin de Semana' : 'Día de Semana'}</td>
-              <td style={styles.td}>{getHolidayLabel(shift.holidayType)}</td>
+              <td style={styles.td}>{getHolidayLabel(shift)}</td>
               <td style={{...styles.td, ...styles.tdRight}}>{formatCurrency(shift.payment)}</td>
             </tr>
           ))}

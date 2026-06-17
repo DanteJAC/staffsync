@@ -55,8 +55,8 @@ function App() {
       id: Date.now().toString(),
       name,
       clientId: null,
-      baseRates: { weekday: 0, weekend: 0 },
-      shifts: [] // Array of { id, date, isWeekend, holidayType }
+      baseRates: { weekday: 0, weekend: 0, standardHours: 8 },
+      shifts: [] // Array of { id, date, isWeekend, holidayType, isPartial, totalHours, workedHours }
     }
     setWorkers(prev => [...prev, newWorker])
     toast.success(`Trabajadora ${name} añadida`)
@@ -69,6 +69,13 @@ function App() {
   }
 
   const activeWorker = workers.find(w => w.id === activeWorkerId)
+
+  const otherOccupiedDates = new Set()
+  if (activeWorker && activeWorker.clientId) {
+    workers.filter(w => w.clientId === activeWorker.clientId && w.id !== activeWorker.id).forEach(w => {
+      (w.shifts || []).forEach(s => otherOccupiedDates.add(s.date))
+    })
+  }
 
   const handleUpdateRates = (newRates) => {
     if (!activeWorker) return
@@ -127,15 +134,13 @@ function App() {
           border: '1px solid rgba(255,255,255,0.1)'
         }
       }} />
-      <header style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ visibility: 'hidden', width: '200px' }}>Espaciador</div>
-        
-        <div style={{ textAlign: 'center' }}>
+      <header style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ flex: '1 1 100%', textAlign: 'center', order: 1 }}>
           <h1 style={{ margin: 0 }}>Calculadora de Turnos</h1>
           <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>Calcula tus pagos de forma rápida y precisa</p>
         </div>
 
-        <div style={{ width: '250px', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', order: 2 }}>
           <button 
             className="btn" 
             style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', background: 'rgba(255,255,255,0.1)' }}
@@ -156,18 +161,18 @@ function App() {
         />
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         <button 
           className={`btn ${appMode === 'workers' ? 'btn-primary' : ''}`}
           onClick={() => setAppMode('workers')}
-          style={{ width: '200px' }}
+          style={{ flex: '1 1 200px', maxWidth: '300px' }}
         >
           👩‍⚕️ Gestión de Trabajadoras
         </button>
         <button 
           className={`btn ${appMode === 'clients' ? 'btn-primary' : ''}`}
           onClick={() => setAppMode('clients')}
-          style={{ width: '200px' }}
+          style={{ flex: '1 1 200px', maxWidth: '300px' }}
         >
           🏢 Gestión de Clientes
         </button>
@@ -192,16 +197,18 @@ function App() {
               />
               {activeWorker ? (
                 <>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                     <button 
                       className={`btn ${currentView === 'mensual' ? 'btn-primary' : ''}`}
                       onClick={() => setCurrentView('mensual')}
+                      style={{ flex: '1 1 200px' }}
                     >
                       📅 Calendario Mensual
                     </button>
                     <button 
                       className={`btn ${currentView === 'anual' ? 'btn-primary' : ''}`}
                       onClick={() => setCurrentView('anual')}
+                      style={{ flex: '1 1 200px' }}
                     >
                       📊 Resumen Anual
                     </button>
@@ -211,7 +218,7 @@ function App() {
                     <div className="grid grid-cols-2">
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         <ConfigurationPanel 
-                          rates={activeWorker.baseRates || { weekday: 0, weekend: 0 }} 
+                          rates={activeWorker.baseRates || { weekday: 0, weekend: 0, standardHours: 8 }} 
                           onUpdate={handleUpdateRates}
                           clientId={activeWorker.clientId}
                           clients={clients}
@@ -224,6 +231,8 @@ function App() {
                           onChangeShifts={handleUpdateShifts} 
                           currentDate={calendarDate}
                           setCurrentDate={setCalendarDate}
+                          otherOccupiedDates={otherOccupiedDates}
+                          standardHours={activeWorker.baseRates?.standardHours || 8}
                         />
                       </div>
                       

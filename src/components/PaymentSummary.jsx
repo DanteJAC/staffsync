@@ -25,15 +25,23 @@ export default function PaymentSummary({ workerName, shifts, baseRates, currentD
       multiplier = 2.0
     }
 
-    return base * multiplier
+    let payment = base * multiplier
+    if (shift.isPartial && shift.totalHours > 0) {
+      payment = payment * (shift.workedHours / shift.totalHours)
+    }
+
+    return payment
   }
 
-  const getHolidayLabel = (type) => {
-    switch(type) {
-      case 'normal': return 'Feriado Normal (+30%)'
-      case 'irrenunciable': return 'Feriado Irrenunciable (+100%)'
-      default: return 'Día Normal'
+  const getHolidayLabel = (shift) => {
+    let label = 'Día Normal'
+    if (shift.holidayType === 'normal') label = 'Feriado Normal (+30%)'
+    if (shift.holidayType === 'irrenunciable') label = 'Feriado Irrenunciable (+100%)'
+    
+    if (shift.isPartial) {
+      label += ` (${shift.workedHours}/${shift.totalHours} hrs)`
     }
+    return label
   }
 
   // Filter shifts by current month
@@ -142,7 +150,7 @@ export default function PaymentSummary({ workerName, shifts, baseRates, currentD
                     {shift.date} {shift.isWeekend ? '(Fin de Semana)' : '(Semana)'}
                   </div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                    {getHolidayLabel(shift.holidayType)}
+                    {getHolidayLabel(shift)}
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

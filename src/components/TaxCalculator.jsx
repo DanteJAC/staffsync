@@ -33,6 +33,7 @@ export default function TaxCalculator({
             step="0.01"
             value={retentionRate}
             onChange={(e) => setRetentionRate(Number(e.target.value))}
+            onFocus={(e) => e.target.select()}
             style={{ width: '100%' }}
           />
         </div>

@@ -50,6 +50,7 @@ export default function ConfigurationPanel({ rates, onUpdate, clientId, clients,
             name="weekday" 
             value={localRates.weekday} 
             onChange={handleChange}
+            onFocus={(e) => e.target.select()}
             min="0"
             required
           />
@@ -62,7 +63,22 @@ export default function ConfigurationPanel({ rates, onUpdate, clientId, clients,
             name="weekend" 
             value={localRates.weekend} 
             onChange={handleChange}
+            onFocus={(e) => e.target.select()}
             min="0"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="standardHours">Horas Totales por Turno (Estándar)</label>
+          <input 
+            type="number" 
+            id="standardHours" 
+            name="standardHours" 
+            value={localRates.standardHours || 8} 
+            onChange={handleChange}
+            onFocus={(e) => e.target.select()}
+            min="1"
+            max="24"
             required
           />
         </div>
