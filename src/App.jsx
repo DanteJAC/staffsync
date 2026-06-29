@@ -9,8 +9,11 @@ import ClientSelector from './components/ClientSelector'
 import ClientDashboard from './components/ClientDashboard'
 import AgencySettings from './components/AgencySettings'
 import GlobalWorkersSummary from './components/GlobalWorkersSummary'
+import AdminLoginModal from './components/AdminLoginModal'
 import { Toaster, toast } from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
+import { db, auth } from './firebase'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 function App() {
   const [workers, setWorkers] = useState(() => {
@@ -28,7 +31,13 @@ function App() {
     return saved ? JSON.parse(saved) : { logoBase64: null }
   })
 
+  const [adminUser, setAdminUser] = useState(() => {
+    const saved = localStorage.getItem('adminUser')
+    return saved ? JSON.parse(saved) : null
+  })
+
   const [showSettings, setShowSettings] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const [appMode, setAppMode] = useState('workers') // 'workers' | 'clients'
   
@@ -38,16 +47,40 @@ function App() {
   const [calendarDate, setCalendarDate] = useState(new Date())
 
   useEffect(() => {
+    localStorage.setItem('adminUser', JSON.stringify(adminUser))
+  }, [adminUser])
+
+  useEffect(() => {
+    if (adminUser && db) {
+      const fetchData = async () => {
+        try {
+          const docRef = doc(db, 'staffsync', 'mainData')
+          const docSnap = await getDoc(docRef)
+          if (docSnap.exists()) {
+            const data = docSnap.data()
+            if (data.workers) setWorkers(data.workers)
+            if (data.clients) setClients(data.clients)
+            if (data.agencySettings) setAgencySettings(data.agencySettings)
+            toast.success('Base de datos conectada a Firestore')
+          }
+        } catch (err) {
+          console.error('Error fetching from Firebase:', err)
+        }
+      }
+      fetchData()
+    }
+  }, [adminUser])
+
+  useEffect(() => {
     localStorage.setItem('workersData', JSON.stringify(workers))
-  }, [workers])
-
-  useEffect(() => {
     localStorage.setItem('clientsData', JSON.stringify(clients))
-  }, [clients])
-
-  useEffect(() => {
     localStorage.setItem('agencySettings', JSON.stringify(agencySettings))
-  }, [agencySettings])
+
+    if (adminUser && db) {
+      setDoc(doc(db, 'staffsync', 'mainData'), { workers, clients, agencySettings }, { merge: true })
+        .catch(err => console.error('Error syncing data to Firebase:', err))
+    }
+  }, [workers, clients, agencySettings, adminUser])
 
   // --- Handlers for Workers ---
   const handleAddWorker = (name) => {
@@ -140,7 +173,15 @@ function App() {
           <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>Calcula tus pagos de forma rápida y precisa</p>
         </div>
 
-        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', order: 2 }}>
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', order: 2, flexWrap: 'wrap' }}>
+          <button 
+            className={`btn ${adminUser ? 'btn-primary' : ''}`}
+            style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', background: adminUser ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255,255,255,0.1)' }}
+            onClick={() => adminUser ? (confirm('¿Cerrar sesión de administrador?') && (setAdminUser(null), auth && auth.signOut(), toast.success('Sesión cerrada'))) : setShowLoginModal(true)}
+            title={adminUser ? `Admin Logged: ${adminUser.email}` : "Iniciar Sesión Administrador"}
+          >
+            {adminUser ? `👤 Admin Conectado` : `🔐 Acceso Admin`}
+          </button>
           <button 
             className="btn" 
             style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', background: 'rgba(255,255,255,0.1)' }}
@@ -152,6 +193,16 @@ function App() {
           <DataBackup data={backupData} onRestore={handleRestoreData} />
         </div>
       </header>
+
+      {showLoginModal && (
+        <AdminLoginModal 
+          onClose={() => setShowLoginModal(false)} 
+          onLoginSuccess={(user) => {
+            setAdminUser(user)
+            setShowLoginModal(false)
+          }} 
+        />
+      )}
 
       {showSettings && (
         <AgencySettings 

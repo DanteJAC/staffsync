@@ -38,6 +38,13 @@ export default function WorkerSelector({ workers, activeWorkerId, onSelect, onAd
         </p>
       ) : (
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div 
+            className={`worker-tab ${activeWorkerId === null ? 'active' : ''}`}
+            onClick={() => onSelect(null)}
+            style={{ cursor: 'pointer', padding: '0.5rem 1rem', fontWeight: '600', color: activeWorkerId === null ? 'var(--color-primary)' : 'var(--color-text-main)' }}
+          >
+            📋 Nómina Global
+          </div>
           {workers.map(worker => (
             <div 
               key={worker.id}

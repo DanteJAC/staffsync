@@ -67,8 +67,8 @@ export default function GlobalWorkersSummary({ workers, currentDate, setCurrentD
   }, [workers, currentDate, retentionRate, year])
 
   return (
-    <div className="glass-panel" style={{ padding: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div>
+      <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ margin: 0, color: 'var(--color-text-main)', fontSize: '1.5rem' }}>
             Nómina Global <span style={{ color: 'var(--color-primary)' }}>Trabajadoras</span>
@@ -78,7 +78,7 @@ export default function GlobalWorkersSummary({ workers, currentDate, setCurrentD
           </p>
         </div>
         
-        <div className="calendar-header" style={{ minWidth: '300px', margin: 0, background: 'rgba(0,0,0,0.2)', padding: '0.5rem 1rem', borderRadius: 'var(--border-radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="calendar-header" style={{ minWidth: '280px', margin: 0, background: 'rgba(0,0,0,0.2)', padding: '0.5rem 1rem', borderRadius: 'var(--border-radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
           <button className="btn" style={{ padding: '0.2rem 0.6rem', background: 'rgba(255,255,255,0.1)' }} onClick={prevMonth}>&lt;</button>
           <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{monthName} {year}</h3>
           <button className="btn" style={{ padding: '0.2rem 0.6rem', background: 'rgba(255,255,255,0.1)' }} onClick={nextMonth}>&gt;</button>
@@ -86,13 +86,16 @@ export default function GlobalWorkersSummary({ workers, currentDate, setCurrentD
       </div>
 
       {rows.length === 0 ? (
-        <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: '3rem 0' }}>
-          No hay trabajadoras registradas.
-        </p>
+        <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem' }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '1.1rem', margin: 0 }}>
+            No hay trabajadoras registradas o con turnos este mes.
+          </p>
+        </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
+        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
           
-          <div style={{ overflowX: 'auto' }}>
+          <div className="glass-panel" style={{ flex: '1 1 500px', padding: '1.5rem', overflowX: 'auto' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: 'var(--color-primary)', fontSize: '1.1rem' }}>Detalle por Trabajadora</h3>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
@@ -138,8 +141,8 @@ export default function GlobalWorkersSummary({ workers, currentDate, setCurrentD
             </table>
           </div>
 
-          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--color-border)', height: 'fit-content' }}>
-            <h3 style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <div className="glass-panel" style={{ flex: '1 1 300px', padding: '1.5rem' }}>
+            <h3 style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', margin: '0 0 1.5rem 0', textTransform: 'uppercase', letterSpacing: '1px' }}>
               Totales de Nómina
             </h3>
             
