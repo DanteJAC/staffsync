@@ -3,7 +3,6 @@ import { useHolidays } from '../hooks/useHolidays'
 import { toast } from 'react-hot-toast'
 
 export default function CalendarSelector({ shifts, onChangeShifts, currentDate, setCurrentDate, otherOccupiedDates = new Set(), standardHours = 8 }) {
-  const [brush, setBrush] = useState('normal')
   const [partialModal, setPartialModal] = useState({ isOpen: false, dateStr: '', workedHours: standardHours })
 
   // Calendar calculations
@@ -47,40 +46,22 @@ export default function CalendarSelector({ shifts, onChangeShifts, currentDate, 
 
     let newShifts = [...shifts]
 
-    if (brush === 'erase') {
+    if (existingShift) {
+      // Toggle off
       newShifts = newShifts.filter(s => s.date !== dateStr)
     } else {
       let holidayType = 'none'
-      
-      // Auto-detect holiday if using normal brush
-      if (brush === 'normal') {
-        const apiHoliday = holidays.find(h => h.date === dateStr)
-        if (apiHoliday) {
-          holidayType = apiHoliday.type // 'normal' or 'irrenunciable'
-        }
-      } else if (brush === 'holiday-normal') {
-        holidayType = 'normal'
-      } else if (brush === 'holiday-irrenunciable') {
-        holidayType = 'irrenunciable'
+      const apiHoliday = holidays.find(h => h.date === dateStr)
+      if (apiHoliday) {
+        holidayType = apiHoliday.type // 'normal' or 'irrenunciable'
       }
 
-      if (existingShift && existingShift.holidayType === holidayType) {
-        // Toggle off
-        newShifts = newShifts.filter(s => s.date !== dateStr)
-      } else {
-        const newShiftData = {
-          id: existingShift ? existingShift.id : crypto.randomUUID(),
-          date: dateStr,
-          isWeekend,
-          holidayType
-        }
-
-        if (existingShift) {
-          newShifts = newShifts.map(s => s.date === dateStr ? newShiftData : s)
-        } else {
-          newShifts.push(newShiftData)
-        }
-      }
+      newShifts.push({
+        id: crypto.randomUUID(),
+        date: dateStr,
+        isWeekend,
+        holidayType
+      })
     }
 
     onChangeShifts(newShifts)
@@ -210,32 +191,6 @@ export default function CalendarSelector({ shifts, onChangeShifts, currentDate, 
 
   return (
     <div className="glass-panel" style={{ userSelect: 'none' }}>
-      <div className="calendar-toolbar">
-        <button 
-          className={`brush-btn ${brush === 'normal' ? 'active' : ''}`}
-          onClick={() => setBrush('normal')}
-        >
-          🖌️ Turno Normal
-        </button>
-        <button 
-          className={`brush-btn ${brush === 'holiday-normal' ? 'active' : ''}`}
-          onClick={() => setBrush('holiday-normal')}
-        >
-          🟠 Feriado Normal
-        </button>
-        <button 
-          className={`brush-btn ${brush === 'holiday-irrenunciable' ? 'active' : ''}`}
-          onClick={() => setBrush('holiday-irrenunciable')}
-        >
-          🔴 Feriado Irren.
-        </button>
-        <button 
-          className={`brush-btn ${brush === 'erase' ? 'active' : ''}`}
-          onClick={() => setBrush('erase')}
-        >
-          ❌ Borrar
-        </button>
-      </div>
 
       <div className="calendar-header">
         <button className="btn" style={{ padding: '0.2rem 0.5rem', background: 'rgba(255,255,255,0.1)', color: 'white' }} onClick={prevMonth}>
