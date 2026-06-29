@@ -10,6 +10,7 @@ import ClientDashboard from './components/ClientDashboard'
 import AgencySettings from './components/AgencySettings'
 import GlobalWorkersSummary from './components/GlobalWorkersSummary'
 import AdminLoginModal from './components/AdminLoginModal'
+import WorkerPortal from './components/WorkerPortal'
 import { Toaster, toast } from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
 import { db, auth } from './firebase'
@@ -34,6 +35,11 @@ function App() {
   const [adminUser, setAdminUser] = useState(() => {
     const saved = localStorage.getItem('adminUser')
     return saved ? JSON.parse(saved) : null
+  })
+
+  const [roleView, setRoleView] = useState(() => {
+    const savedAdmin = localStorage.getItem('adminUser')
+    return savedAdmin ? 'admin' : 'worker'
   })
 
   const [showSettings, setShowSettings] = useState(false)
@@ -199,6 +205,7 @@ function App() {
           onClose={() => setShowLoginModal(false)} 
           onLoginSuccess={(user) => {
             setAdminUser(user)
+            setRoleView('admin')
             setShowLoginModal(false)
           }} 
         />
@@ -212,147 +219,194 @@ function App() {
         />
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+      {/* Selector de Vista / Rol Principal */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap', background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: '50px', maxWidth: '500px', margin: '0 auto 2rem auto', border: '1px solid rgba(255,255,255,0.1)' }}>
         <button 
-          className={`btn ${appMode === 'workers' ? 'btn-primary' : ''}`}
-          onClick={() => setAppMode('workers')}
-          style={{ flex: '1 1 200px', maxWidth: '300px' }}
+          className={`btn ${roleView === 'worker' ? 'btn-primary' : ''}`}
+          onClick={() => setRoleView('worker')}
+          style={{ flex: '1 1 180px', borderRadius: '40px', padding: '0.6rem 1.2rem', fontWeight: 'bold' }}
         >
-          👩‍⚕️ Gestión de Trabajadoras
+          👩‍💼 Portal Trabajadora
         </button>
         <button 
-          className={`btn ${appMode === 'clients' ? 'btn-primary' : ''}`}
-          onClick={() => setAppMode('clients')}
-          style={{ flex: '1 1 200px', maxWidth: '300px' }}
+          className={`btn ${roleView === 'admin' ? 'btn-primary' : ''}`}
+          onClick={() => {
+            if (!adminUser) {
+              toast('Inicia sesión de administrador para acceder a gestión y cálculos', { icon: '🔐' })
+              setShowLoginModal(true)
+            } else {
+              setRoleView('admin')
+            }
+          }}
+          style={{ flex: '1 1 180px', borderRadius: '40px', padding: '0.6rem 1.2rem', fontWeight: 'bold' }}
         >
-          🏢 Gestión de Clientes
+          ⚙️ Administración ({adminUser ? 'OK' : '🔒'})
         </button>
       </div>
 
       <main style={{ maxWidth: '1200px', margin: '0 auto', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--border-radius-xl)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
         <AnimatePresence mode="wait">
-          {appMode === 'workers' ? (
+          {roleView === 'worker' ? (
             <motion.div 
-              key="workers-view"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              key="worker-portal"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
+              style={{ padding: '2rem' }}
             >
-              <WorkerSelector 
+              <WorkerPortal 
                 workers={workers} 
-                activeWorkerId={activeWorkerId} 
-                onSelect={setActiveWorkerId} 
-                onAdd={handleAddWorker} 
-                onDelete={handleDeleteWorker} 
+                onUpdateWorker={(updatedWorker) => {
+                  setWorkers(workers.map(w => w.id === updatedWorker.id ? updatedWorker : w))
+                }} 
               />
-              {activeWorker ? (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                    <button 
-                      className={`btn ${currentView === 'mensual' ? 'btn-primary' : ''}`}
-                      onClick={() => setCurrentView('mensual')}
-                      style={{ flex: '1 1 200px' }}
-                    >
-                      📅 Calendario Mensual
-                    </button>
-                    <button 
-                      className={`btn ${currentView === 'anual' ? 'btn-primary' : ''}`}
-                      onClick={() => setCurrentView('anual')}
-                      style={{ flex: '1 1 200px' }}
-                    >
-                      📊 Resumen Anual
-                    </button>
-                  </div>
-
-                  {currentView === 'mensual' ? (
-                    <div className="grid grid-cols-2">
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <ConfigurationPanel 
-                          rates={activeWorker.baseRates || { weekday: 0, weekend: 0, standardHours: 8 }} 
-                          onUpdate={handleUpdateRates}
-                          clientId={activeWorker.clientId}
-                          clients={clients}
-                          onAssignClient={(cId) => {
-                            setWorkers(workers.map(w => w.id === activeWorkerId ? { ...w, clientId: cId } : w))
-                          }}
-                        />
-                        <CalendarSelector 
-                          shifts={activeWorker.shifts || []} 
-                          onChangeShifts={handleUpdateShifts} 
-                          currentDate={calendarDate}
-                          setCurrentDate={setCalendarDate}
-                          otherOccupiedDates={otherOccupiedDates}
-                          standardHours={activeWorker.baseRates?.standardHours || 8}
-                        />
-                      </div>
-                      
-                      <div>
-                        <PaymentSummary 
-                          workerName={activeWorker.name}
-                          shifts={activeWorker.shifts || []} 
-                          baseRates={activeWorker.baseRates || { weekday: 0, weekend: 0 }}
-                          currentDate={calendarDate}
-                          agencySettings={agencySettings}
-                          onRemove={(shiftId) => {
-                            handleUpdateShifts((activeWorker.shifts || []).filter(s => s.id !== shiftId))
-                          }} 
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <AnnualDashboard 
-                      workerName={activeWorker.name} 
-                      shifts={activeWorker.shifts || []} 
-                      baseRates={activeWorker.baseRates || { weekday: 0, weekend: 0 }} 
-                    />
-                  )}
-                </>
-              ) : (
-                <GlobalWorkersSummary 
-                  workers={workers} 
-                  currentDate={calendarDate} 
-                  setCurrentDate={setCalendarDate}
-                  onSelectWorker={setActiveWorkerId}
-                />
-              )}
             </motion.div>
           ) : (
             <motion.div 
-              key="clients-view"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              key="admin-portal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <ClientSelector 
-                clients={clients}
-                activeClientId={activeClientId}
-                onSelect={setActiveClientId}
-                onAdd={handleAddClient}
-                onDelete={handleDeleteClient}
-              />
-              {activeClient ? (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <div className="calendar-header" style={{ width: '300px', margin: '0' }}>
-                      <button className="btn" onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}>&lt;</button>
-                      <h3 style={{ margin: 0 }}>{['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][calendarDate.getMonth()]} {calendarDate.getFullYear()}</h3>
-                      <button className="btn" onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}>&gt;</button>
-                    </div>
-                  </div>
-                  
-                  <ClientDashboard 
-                    client={activeClient}
-                    onUpdateClient={handleUpdateClient}
-                    workers={workers}
-                    currentDate={calendarDate}
-                    agencySettings={agencySettings}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', margin: '2rem 0', flexWrap: 'wrap' }}>
+                <button 
+                  className={`btn ${appMode === 'workers' ? 'btn-primary' : ''}`}
+                  onClick={() => setAppMode('workers')}
+                  style={{ flex: '1 1 200px', maxWidth: '300px' }}
+                >
+                  👩‍⚕️ Gestión de Trabajadoras
+                </button>
+                <button 
+                  className={`btn ${appMode === 'clients' ? 'btn-primary' : ''}`}
+                  onClick={() => setAppMode('clients')}
+                  style={{ flex: '1 1 200px', maxWidth: '300px' }}
+                >
+                  🏢 Gestión de Clientes
+                </button>
+              </div>
+
+              {appMode === 'workers' ? (
+                <div style={{ padding: '0 2rem 2rem 2rem' }}>
+                  <WorkerSelector 
+                    workers={workers} 
+                    activeWorkerId={activeWorkerId} 
+                    onSelect={setActiveWorkerId} 
+                    onAdd={handleAddWorker} 
+                    onDelete={handleDeleteWorker} 
                   />
-                </>
+                  {activeWorker ? (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                        <div className="calendar-header" style={{ width: '300px', margin: '0' }}>
+                          <button className="btn" onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}>&lt;</button>
+                          <h3 style={{ margin: 0 }}>{['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][calendarDate.getMonth()]} {calendarDate.getFullYear()}</h3>
+                          <button className="btn" onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}>&gt;</button>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                        <button 
+                          className={`btn ${currentView === 'mensual' ? 'btn-primary' : ''}`}
+                          onClick={() => setCurrentView('mensual')}
+                          style={{ flex: '1 1 200px' }}
+                        >
+                          📅 Calendario Mensual
+                        </button>
+                        <button 
+                          className={`btn ${currentView === 'anual' ? 'btn-primary' : ''}`}
+                          onClick={() => setCurrentView('anual')}
+                          style={{ flex: '1 1 200px' }}
+                        >
+                          📊 Resumen Anual
+                        </button>
+                      </div>
+
+                      {currentView === 'mensual' ? (
+                        <div className="grid grid-cols-2">
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <ConfigurationPanel 
+                              rates={activeWorker.baseRates || { weekday: 0, weekend: 0, standardHours: 8 }} 
+                              onUpdate={handleUpdateRates}
+                              clientId={activeWorker.clientId}
+                              clients={clients}
+                              onAssignClient={(cId) => {
+                                setWorkers(workers.map(w => w.id === activeWorkerId ? { ...w, clientId: cId } : w))
+                              }}
+                            />
+                            <CalendarSelector 
+                              shifts={activeWorker.shifts || []} 
+                              onChangeShifts={handleUpdateShifts} 
+                              currentDate={calendarDate}
+                              setCurrentDate={setCalendarDate}
+                              otherOccupiedDates={otherOccupiedDates}
+                              standardHours={activeWorker.baseRates?.standardHours || 8}
+                            />
+                          </div>
+                          
+                          <div>
+                            <PaymentSummary 
+                              workerName={activeWorker.name}
+                              shifts={activeWorker.shifts || []} 
+                              baseRates={activeWorker.baseRates || { weekday: 0, weekend: 0 }}
+                              currentDate={calendarDate}
+                              agencySettings={agencySettings}
+                              onRemove={(shiftId) => {
+                                handleUpdateShifts((activeWorker.shifts || []).filter(s => s.id !== shiftId))
+                              }} 
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <AnnualDashboard 
+                          workerName={activeWorker.name} 
+                          shifts={activeWorker.shifts || []} 
+                          baseRates={activeWorker.baseRates || { weekday: 0, weekend: 0 }} 
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <GlobalWorkersSummary 
+                      workers={workers} 
+                      currentDate={calendarDate} 
+                      setCurrentDate={setCalendarDate}
+                      onSelectWorker={setActiveWorkerId}
+                    />
+                  )}
+                </div>
               ) : (
-                <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem' }}>
-                  <h3 style={{ color: 'var(--color-text-muted)' }}>👆 Selecciona o agrega un cliente arriba para continuar.</h3>
+                <div style={{ padding: '0 2rem 2rem 2rem' }}>
+                  <ClientSelector 
+                    clients={clients}
+                    activeClientId={activeClientId}
+                    onSelect={setActiveClientId}
+                    onAdd={handleAddClient}
+                    onDelete={handleDeleteClient}
+                  />
+                  {activeClient ? (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                        <div className="calendar-header" style={{ width: '300px', margin: '0' }}>
+                          <button className="btn" onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}>&lt;</button>
+                          <h3 style={{ margin: 0 }}>{['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][calendarDate.getMonth()]} {calendarDate.getFullYear()}</h3>
+                          <button className="btn" onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}>&gt;</button>
+                        </div>
+                      </div>
+                      
+                      <ClientDashboard 
+                        client={activeClient}
+                        onUpdateClient={handleUpdateClient}
+                        workers={workers}
+                        currentDate={calendarDate}
+                        agencySettings={agencySettings}
+                      />
+                    </>
+                  ) : (
+                    <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem' }}>
+                      <h3 style={{ color: 'var(--color-text-muted)' }}>👆 Selecciona o agrega un cliente arriba para continuar.</h3>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
