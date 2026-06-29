@@ -90,32 +90,55 @@ export default function CalendarSelector({ shifts, onChangeShifts, currentDate, 
     e.preventDefault()
     const dateStr = getDateStr(day)
     
-    // Solo podemos hacer parcial un turno que ya existe y que es del usuario actual
-    const shift = shifts.find(s => s.date === dateStr)
-    if (!shift) {
-      toast.error('Debes asignar un turno primero para hacerlo parcial.')
+    if (otherOccupiedDates.has(dateStr)) {
+      toast.error('Este turno ya está ocupado por otra trabajadora en este domicilio.')
       return
     }
+
+    const shift = shifts.find(s => s.date === dateStr)
 
     setPartialModal({
       isOpen: true,
       dateStr,
-      workedHours: shift.isPartial ? shift.workedHours : standardHours
+      workedHours: (shift && shift.isPartial) ? shift.workedHours : standardHours
     })
   }
 
   const handleSavePartial = () => {
-    let newShifts = shifts.map(s => {
-      if (s.date === partialModal.dateStr) {
-        return {
-          ...s,
-          isPartial: true,
-          totalHours: standardHours,
-          workedHours: Number(partialModal.workedHours)
-        }
+    const existingIndex = shifts.findIndex(s => s.date === partialModal.dateStr)
+    let newShifts = [...shifts]
+
+    if (existingIndex >= 0) {
+      newShifts[existingIndex] = {
+        ...newShifts[existingIndex],
+        isPartial: true,
+        totalHours: standardHours,
+        workedHours: Number(partialModal.workedHours)
       }
-      return s
-    })
+    } else {
+      const [, monthStr, dayStr] = partialModal.dateStr.split('-')
+      const dayNum = parseInt(dayStr, 10)
+      const monthIndex = parseInt(monthStr, 10) - 1
+      const dayOfWeek = new Date(year, monthIndex, dayNum).getDay()
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+
+      let holidayType = 'none'
+      const apiHoliday = holidays.find(h => h.date === partialModal.dateStr)
+      if (apiHoliday) {
+        holidayType = apiHoliday.type
+      }
+
+      newShifts.push({
+        id: crypto.randomUUID(),
+        date: partialModal.dateStr,
+        isWeekend,
+        holidayType,
+        isPartial: true,
+        totalHours: standardHours,
+        workedHours: Number(partialModal.workedHours)
+      })
+    }
+
     onChangeShifts(newShifts)
     setPartialModal({ isOpen: false, dateStr: '', workedHours: standardHours })
     toast.success('Turno parcial guardado')
