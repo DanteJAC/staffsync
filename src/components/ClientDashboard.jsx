@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import html2pdf from 'html2pdf.js'
 import InvoiceTemplate from './InvoiceTemplate'
 import { toast } from 'react-hot-toast'
@@ -10,7 +10,7 @@ export default function ClientDashboard({ client, onUpdateClient, workers, curre
   const monthNum = currentDate.getMonth() + 1
   const monthKey = `${yearNum}-${String(monthNum).padStart(2, '0')}`
 
-  const currentRates = client.monthlyRates?.[monthKey] || client.baseRates || { weekday: 0, weekend: 0 }
+  const currentRates = useMemo(() => client.monthlyRates?.[monthKey] || client.baseRates || { weekday: 0, weekend: 0 }, [client.monthlyRates, client.baseRates, monthKey])
   const currentQuota = client.monthlyQuotas?.[monthKey] !== undefined ? client.monthlyQuotas[monthKey] : (client.monthlyQuota || 0)
 
   const handleRateChange = (e) => {
@@ -122,7 +122,7 @@ export default function ClientDashboard({ client, onUpdateClient, workers, curre
       monthName: monthNames[currentDate.getMonth()],
       year: year
     }
-  }, [client, workers, currentDate])
+  }, [client, workers, currentDate, currentRates])
 
   // Progress Bar calculation
   const quota = currentQuota || 1

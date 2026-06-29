@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 export default function ClientSelector({ clients, activeClientId, onSelect, onAdd, onDelete }) {
   const [newClientName, setNewClientName] = useState('')

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import { useRef } from 'react'
 import { motion } from 'framer-motion'
 
 export default function AgencySettings({ settings, onUpdateSettings, onClose }) {

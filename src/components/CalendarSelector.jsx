@@ -124,7 +124,10 @@ export default function CalendarSelector({ shifts, onChangeShifts, currentDate, 
   const handleClearPartial = () => {
     let newShifts = shifts.map(s => {
       if (s.date === partialModal.dateStr) {
-        const { isPartial, totalHours, workedHours, ...rest } = s
+        const rest = { ...s }
+        delete rest.isPartial
+        delete rest.totalHours
+        delete rest.workedHours
         return rest
       }
       return s

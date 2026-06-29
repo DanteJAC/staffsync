@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import { useRef } from 'react'
 
 export default function DataBackup({ workers, setWorkers }) {
   const fileInputRef = useRef(null)
@@ -36,7 +36,7 @@ export default function DataBackup({ workers, setWorkers }) {
         }
 
         // Check if it looks like our workers data
-        if (parsedData.length > 0 && !parsedData[0].hasOwnProperty('baseRates')) {
+        if (parsedData.length > 0 && !Object.hasOwn(parsedData[0], 'baseRates')) {
            throw new Error('Formato de datos no reconocido.')
         }
 

@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 export default function GlobalWorkersSummary({ workers, currentDate, setCurrentDate, onSelectWorker }) {
-  const [retentionRate, setRetentionRate] = useState(15.25)
+  const [retentionRate] = useState(15.25)
 
   const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
   const monthName = MONTHS[currentDate.getMonth()]
@@ -17,9 +17,6 @@ export default function GlobalWorkersSummary({ workers, currentDate, setCurrentD
   const { rows, grandTotalBruto, grandTotalLiquido, totalGlobalShifts } = useMemo(() => {
     const prefix = `${year}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
     const rate = retentionRate / 100
-
-    let totalBruto = 0
-    let totalShifts = 0
 
     const computedRows = workers.map(worker => {
       const monthlyShifts = (worker.shifts || []).filter(s => s.date.startsWith(prefix))
@@ -43,9 +40,6 @@ export default function GlobalWorkersSummary({ workers, currentDate, setCurrentD
       const workerRetencion = workerBruto * rate
       const workerLiquido = workerBruto - workerRetencion
 
-      totalBruto += workerBruto
-      totalShifts += monthlyShifts.length
-
       return {
         id: worker.id,
         name: worker.name,
@@ -54,6 +48,9 @@ export default function GlobalWorkersSummary({ workers, currentDate, setCurrentD
         liquido: workerLiquido
       }
     })
+
+    const totalBruto = computedRows.reduce((sum, r) => sum + r.bruto, 0)
+    const totalShifts = computedRows.reduce((sum, r) => sum + r.shiftsCount, 0)
 
     // Sort rows by name or amount
     computedRows.sort((a, b) => b.bruto - a.bruto)
@@ -67,7 +64,7 @@ export default function GlobalWorkersSummary({ workers, currentDate, setCurrentD
       grandTotalLiquido: totalLiquido,
       totalGlobalShifts: totalShifts
     }
-  }, [workers, currentDate, retentionRate])
+  }, [workers, currentDate, retentionRate, year])
 
   return (
     <div className="glass-panel" style={{ padding: '2rem' }}>

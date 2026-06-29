@@ -1,5 +1,26 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(value)
+}
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="glass-panel" style={{ padding: '0.5rem 1rem', background: 'rgba(15, 23, 42, 0.95)' }}>
+        <p style={{ margin: 0, fontWeight: 'bold' }}>{label}</p>
+        <p style={{ margin: 0, color: 'var(--color-primary)' }}>
+          Total: {formatCurrency(payload[0].value)}
+        </p>
+        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+          Turnos: {payload[0].payload.turnos}
+        </p>
+      </div>
+    )
+  }
+  return null
+}
 
 export default function AnnualDashboard({ workerName, shifts, baseRates }) {
   const data = useMemo(() => {
@@ -28,27 +49,6 @@ export default function AnnualDashboard({ workerName, shifts, baseRates }) {
 
     return monthlyTotals
   }, [shifts, baseRates])
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(value)
-  }
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="glass-panel" style={{ padding: '0.5rem 1rem', background: 'rgba(15, 23, 42, 0.95)' }}>
-          <p style={{ margin: 0, fontWeight: 'bold' }}>{label}</p>
-          <p style={{ margin: 0, color: 'var(--color-primary)' }}>
-            Total: {formatCurrency(payload[0].value)}
-          </p>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-            Turnos: {payload[0].payload.turnos}
-          </p>
-        </div>
-      )
-    }
-    return null
-  }
 
   const yearlyTotal = data.reduce((acc, month) => acc + month.total, 0)
   const yearlyShifts = data.reduce((acc, month) => acc + month.turnos, 0)

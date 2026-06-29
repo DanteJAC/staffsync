@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export default function ConfigurationPanel({ rates, onUpdate, clientId, clients, onAssignClient }) {
   const [localRates, setLocalRates] = useState(rates)
+  const [prevRates, setPrevRates] = useState(rates)
 
-  useEffect(() => {
+  if (rates !== prevRates) {
+    setPrevRates(rates)
     setLocalRates(rates)
-  }, [rates])
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import html2pdf from 'html2pdf.js'
 import { toast } from 'react-hot-toast'
 import TaxCalculator from './TaxCalculator'
@@ -15,7 +15,7 @@ export default function PaymentSummary({ workerName, shifts, baseRates, currentD
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount)
   }
 
-  const calculateShiftPayment = (shift) => {
+  const calculateShiftPayment = useCallback((shift) => {
     const base = shift.isWeekend ? baseRates.weekend : baseRates.weekday
     let multiplier = 1.0
     
@@ -31,7 +31,7 @@ export default function PaymentSummary({ workerName, shifts, baseRates, currentD
     }
 
     return payment
-  }
+  }, [baseRates])
 
   const getHolidayLabel = (shift) => {
     let label = 'Día Normal'
@@ -71,11 +71,11 @@ export default function PaymentSummary({ workerName, shifts, baseRates, currentD
       year: year,
       totalPayment: total
     }
-  }, [shifts, currentDate, baseRates])
+  }, [shifts, currentDate, calculateShiftPayment])
 
   const { bruto, retencion, liquido } = useMemo(() => {
     const rate = retentionRate / 100
-    let b = 0, r = 0, l = 0
+    let b, r, l
 
     if (isTotalLiquid) {
       l = totalPayment

@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react'
+import { forwardRef } from 'react'
 
 const WorkerInvoiceTemplate = forwardRef(({ workerName, shifts, totalPayment, monthName, year, agencySettings, bruto, retencion, liquido, retentionRate, isTotalLiquid }, ref) => {
   const formatCurrency = (amount) => {
