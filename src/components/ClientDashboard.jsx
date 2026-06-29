@@ -139,8 +139,9 @@ export default function ClientDashboard({ client, onUpdateClient, workers, curre
       margin: 0,
       filename: `Factura_${client.name.replace(/\s+/g, '_')}_${monthName}_${year}.pdf`,
       image: { type: 'jpeg', quality: 1 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     }
     
     try {

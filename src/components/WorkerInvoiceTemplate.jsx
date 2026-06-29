@@ -20,8 +20,8 @@ const WorkerInvoiceTemplate = forwardRef(({ workerName, shifts, totalPayment, mo
   const styles = {
     container: {
       width: '210mm',
-      minHeight: '297mm',
-      padding: '40px 50px',
+      minHeight: 'auto',
+      padding: '35px 40px',
       background: '#ffffff',
       color: '#1e293b',
       fontFamily: "'Inter', sans-serif",

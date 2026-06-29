@@ -42,8 +42,8 @@ const InvoiceTemplate = forwardRef(({ client, agencySettings, breakdown, totalRe
       ref={ref} 
       style={{
         width: '800px', // Fixed width for perfect PDF scaling
-        minHeight: '1000px',
-        padding: '50px 60px',
+        minHeight: 'auto',
+        padding: '40px 50px',
         background: '#ffffff',
         color: '#1a1a1a',
         fontFamily: "'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif",
