@@ -9,7 +9,7 @@ import ClientSelector from './components/ClientSelector'
 import ClientDashboard from './components/ClientDashboard'
 import AgencySettings from './components/AgencySettings'
 import GlobalWorkersSummary from './components/GlobalWorkersSummary'
-import AdminLoginModal from './components/AdminLoginModal'
+import InitialLoginScreen from './components/InitialLoginScreen'
 import WorkerPortal from './components/WorkerPortal'
 import { Toaster, toast } from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -32,18 +32,12 @@ function App() {
     return saved ? JSON.parse(saved) : { logoBase64: null }
   })
 
-  const [adminUser, setAdminUser] = useState(() => {
-    const saved = localStorage.getItem('adminUser')
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('currentUser')
     return saved ? JSON.parse(saved) : null
   })
 
-  const [roleView, setRoleView] = useState(() => {
-    const savedAdmin = localStorage.getItem('adminUser')
-    return savedAdmin ? 'admin' : 'worker'
-  })
-
   const [showSettings, setShowSettings] = useState(false)
-  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const [appMode, setAppMode] = useState('workers') // 'workers' | 'clients'
   
@@ -53,11 +47,11 @@ function App() {
   const [calendarDate, setCalendarDate] = useState(new Date())
 
   useEffect(() => {
-    localStorage.setItem('adminUser', JSON.stringify(adminUser))
-  }, [adminUser])
+    localStorage.setItem('currentUser', JSON.stringify(currentUser))
+  }, [currentUser])
 
   useEffect(() => {
-    if (adminUser && db) {
+    if (currentUser?.role === 'admin' && db) {
       const fetchData = async () => {
         try {
           const docRef = doc(db, 'staffsync', 'mainData')
@@ -67,7 +61,7 @@ function App() {
             if (data.workers) setWorkers(data.workers)
             if (data.clients) setClients(data.clients)
             if (data.agencySettings) setAgencySettings(data.agencySettings)
-            toast.success('Base de datos conectada a Firestore')
+            toast.success('Base de datos sincronizada desde Firestore')
           }
         } catch (err) {
           console.error('Error fetching from Firebase:', err)
@@ -75,18 +69,18 @@ function App() {
       }
       fetchData()
     }
-  }, [adminUser])
+  }, [currentUser])
 
   useEffect(() => {
     localStorage.setItem('workersData', JSON.stringify(workers))
     localStorage.setItem('clientsData', JSON.stringify(clients))
     localStorage.setItem('agencySettings', JSON.stringify(agencySettings))
 
-    if (adminUser && db) {
+    if (currentUser?.role === 'admin' && db) {
       setDoc(doc(db, 'staffsync', 'mainData'), { workers, clients, agencySettings }, { merge: true })
         .catch(err => console.error('Error syncing data to Firebase:', err))
     }
-  }, [workers, clients, agencySettings, adminUser])
+  }, [workers, clients, agencySettings, currentUser?.role])
 
   // --- Handlers for Workers ---
   const handleAddWorker = (name) => {
@@ -163,6 +157,22 @@ function App() {
     toast.success('Copia de seguridad restaurada correctamente')
   }
 
+  if (!currentUser) {
+    return (
+      <div style={{ minHeight: '100vh', padding: '1rem', background: 'var(--color-background)' }}>
+        <Toaster position="top-right" toastOptions={{
+          style: {
+            background: 'rgba(30, 41, 59, 0.9)',
+            color: '#fff',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }
+        }} />
+        <InitialLoginScreen workers={workers} onLoginSuccess={setCurrentUser} />
+      </div>
+    )
+  }
+
   return (
     <div style={{ minHeight: '100vh', padding: '2rem' }}>
       <Toaster position="top-right" toastOptions={{
@@ -179,39 +189,44 @@ function App() {
           <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>Calcula tus pagos de forma rápida y precisa</p>
         </div>
 
-        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', order: 2, flexWrap: 'wrap' }}>
-          <button 
-            className={`btn ${adminUser ? 'btn-primary' : ''}`}
-            style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', background: adminUser ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255,255,255,0.1)' }}
-            onClick={() => adminUser ? (confirm('¿Cerrar sesión de administrador?') && (setAdminUser(null), auth && auth.signOut(), toast.success('Sesión cerrada'))) : setShowLoginModal(true)}
-            title={adminUser ? `Admin Logged: ${adminUser.email}` : "Iniciar Sesión Administrador"}
-          >
-            {adminUser ? `👤 Admin Conectado` : `🔐 Acceso Admin`}
-          </button>
-          <button 
-            className="btn" 
-            style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', background: 'rgba(255,255,255,0.1)' }}
-            onClick={() => setShowSettings(true)}
-            title="Ajustes de Agencia"
-          >
-            ⚙️ Ajustes
-          </button>
-          <DataBackup data={backupData} onRestore={handleRestoreData} />
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', order: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: 'rgba(0,0,0,0.3)', padding: '0.4rem 1rem', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: '600' }}>
+              👤 {currentUser.role === 'admin' ? 'Administrador' : currentUser.name}
+            </span>
+            <button 
+              className="btn"
+              onClick={() => {
+                if (confirm('¿Deseas cerrar sesión?')) {
+                  setCurrentUser(null)
+                  auth && auth.signOut()
+                  toast.success('Sesión cerrada')
+                }
+              }}
+              style={{ padding: '0.2rem 0.6rem', fontSize: '0.8rem', background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)' }}
+              title="Cerrar sesión"
+            >
+              🚪 Salir
+            </button>
+          </div>
+
+          {currentUser.role === 'admin' && (
+            <>
+              <button 
+                className="btn" 
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', background: 'rgba(255,255,255,0.1)' }}
+                onClick={() => setShowSettings(true)}
+                title="Ajustes de Agencia"
+              >
+                ⚙️ Ajustes
+              </button>
+              <DataBackup data={backupData} onRestore={handleRestoreData} />
+            </>
+          )}
         </div>
       </header>
 
-      {showLoginModal && (
-        <AdminLoginModal 
-          onClose={() => setShowLoginModal(false)} 
-          onLoginSuccess={(user) => {
-            setAdminUser(user)
-            setRoleView('admin')
-            setShowLoginModal(false)
-          }} 
-        />
-      )}
-
-      {showSettings && (
+      {showSettings && currentUser.role === 'admin' && (
         <AgencySettings 
           settings={agencySettings} 
           onUpdateSettings={setAgencySettings} 
@@ -219,34 +234,9 @@ function App() {
         />
       )}
 
-      {/* Selector de Vista / Rol Principal */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap', background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: '50px', maxWidth: '500px', margin: '0 auto 2rem auto', border: '1px solid rgba(255,255,255,0.1)' }}>
-        <button 
-          className={`btn ${roleView === 'worker' ? 'btn-primary' : ''}`}
-          onClick={() => setRoleView('worker')}
-          style={{ flex: '1 1 180px', borderRadius: '40px', padding: '0.6rem 1.2rem', fontWeight: 'bold' }}
-        >
-          👩‍💼 Portal Trabajadora
-        </button>
-        <button 
-          className={`btn ${roleView === 'admin' ? 'btn-primary' : ''}`}
-          onClick={() => {
-            if (!adminUser) {
-              toast('Inicia sesión de administrador para acceder a gestión y cálculos', { icon: '🔐' })
-              setShowLoginModal(true)
-            } else {
-              setRoleView('admin')
-            }
-          }}
-          style={{ flex: '1 1 180px', borderRadius: '40px', padding: '0.6rem 1.2rem', fontWeight: 'bold' }}
-        >
-          ⚙️ Administración ({adminUser ? 'OK' : '🔒'})
-        </button>
-      </div>
-
       <main style={{ maxWidth: '1200px', margin: '0 auto', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--border-radius-xl)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
         <AnimatePresence mode="wait">
-          {roleView === 'worker' ? (
+          {currentUser.role === 'worker' ? (
             <motion.div 
               key="worker-portal"
               initial={{ opacity: 0, y: 20 }}
@@ -257,6 +247,7 @@ function App() {
             >
               <WorkerPortal 
                 workers={workers} 
+                lockedWorkerId={currentUser.workerId}
                 onUpdateWorker={(updatedWorker) => {
                   setWorkers(workers.map(w => w.id === updatedWorker.id ? updatedWorker : w))
                 }} 

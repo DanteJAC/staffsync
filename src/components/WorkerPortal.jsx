@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react'
 import { toast } from 'react-hot-toast'
 
-export default function WorkerPortal({ workers, onUpdateWorker }) {
-  const [selectedWorkerId, setSelectedWorkerId] = useState(workers[0]?.id || null)
+export default function WorkerPortal({ workers, onUpdateWorker, lockedWorkerId }) {
+  const [selectedWorkerId, setSelectedWorkerId] = useState(lockedWorkerId || workers[0]?.id || null)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedShiftId, setSelectedShiftId] = useState('')
   const [shiftSummaryText, setShiftSummaryText] = useState('')
 
-  const activeWorker = workers.find(w => w.id === selectedWorkerId)
+  const activeWorker = workers.find(w => w.id === (lockedWorkerId || selectedWorkerId))
 
   const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
   const monthName = MONTHS[currentDate.getMonth()]
@@ -93,16 +93,22 @@ export default function WorkerPortal({ workers, onUpdateWorker }) {
       <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', width: '100%' }}>
           <span style={{ fontSize: '1.2rem', fontWeight: '600', color: 'var(--color-primary)' }}>👩‍💼 Mi Perfil:</span>
-          <select 
-            value={selectedWorkerId || ''} 
-            onChange={(e) => setSelectedWorkerId(e.target.value)}
-            style={{ padding: '0.6rem 1rem', fontSize: '1.1rem', fontWeight: 'bold', background: 'var(--color-background)', border: '1px solid var(--color-primary)', borderRadius: 'var(--border-radius-md)', flex: '1 1 250px' }}
-          >
-            {workers.length === 0 && <option value="">No hay trabajadoras registradas</option>}
-            {workers.map(w => (
-              <option key={w.id} value={w.id}>{w.name}</option>
-            ))}
-          </select>
+          {lockedWorkerId ? (
+            <span style={{ padding: '0.6rem 1.2rem', fontSize: '1.2rem', fontWeight: '800', background: 'rgba(59, 130, 246, 0.2)', border: '1px solid var(--color-primary)', borderRadius: 'var(--border-radius-md)', color: '#fff' }}>
+              {activeWorker?.name || 'Trabajadora Conectada'}
+            </span>
+          ) : (
+            <select 
+              value={selectedWorkerId || ''} 
+              onChange={(e) => setSelectedWorkerId(e.target.value)}
+              style={{ padding: '0.6rem 1rem', fontSize: '1.1rem', fontWeight: 'bold', background: 'var(--color-background)', border: '1px solid var(--color-primary)', borderRadius: 'var(--border-radius-md)', flex: '1 1 250px' }}
+            >
+              {workers.length === 0 && <option value="">No hay trabajadoras registradas</option>}
+              {workers.map(w => (
+                <option key={w.id} value={w.id}>{w.name}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {activeWorker && (
