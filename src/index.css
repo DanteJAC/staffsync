@@ -217,52 +217,99 @@ select:focus {
 
 @media (max-width: 768px) {
   body {
-    padding: 1rem;
+    padding: 0.5rem;
+  }
+  main {
+    border-radius: var(--border-radius-md) !important;
   }
   .grid-cols-2 {
-    grid-template-columns: 1fr;
-  }
-  h1 {
-    font-size: 1.8rem;
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
   }
   .glass-panel {
-    padding: 1rem;
+    padding: 1rem !important;
+  }
+  /* Header navigation adjustments */
+  header {
+    flex-direction: column !important;
+    text-align: center;
+    gap: 1rem !important;
+  }
+  header > div {
+    width: 100% !important;
+  }
+  /* Selector header boxes (Worker/Client selector titles & forms) */
+  .glass-panel > div:first-child {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+  form {
+    display: flex;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+  form input[type="text"], 
+  form input[type="number"], 
+  form select {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+  form button[type="submit"] {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+  /* Typography sizing for phone screens */
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  h2, h3 {
+    font-size: 1.2rem !important;
+  }
+  /* Calendar adjustments */
+  .calendar-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  .calendar-header h3 {
+    order: -1;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.25rem !important;
+  }
+  .calendar-grid {
+    gap: 0.25rem;
   }
   .calendar-day {
-    font-size: 0.85rem;
-  }
-  .brush-btn {
     font-size: 0.8rem;
-    padding: 0.4rem 0.5rem;
-    flex: 1 1 45%;
+    border-radius: var(--border-radius-sm);
+  }
+  /* Shift cards and payment summary rows on mobile */
+  div[style*="background: rgba(15, 23, 42, 0.4)"][style*="justify-content: space-between"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+  div[style*="background: rgba(15, 23, 42, 0.4)"][style*="justify-content: space-between"] > div:last-child {
+    width: 100%;
+    justify-content: space-between !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 0.5rem;
+  }
+  /* Button groups (e.g. Mode switcher, View switcher, Action buttons) */
+  div[style*="display: flex"][style*="flex-wrap: wrap"] > button.btn,
+  div[style*="display: flex"][style*="gap: 1rem"] > button.btn {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
   }
 }
 
 /* Calendar Selector */
-.calendar-toolbar {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
-
-.brush-btn {
-  padding: 0.5rem 1rem;
-  border-radius: var(--border-radius-md);
-  border: 1px solid var(--color-border);
-  background: rgba(15, 23, 42, 0.4);
-  color: var(--color-text-main);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  font-family: var(--font-main);
-  font-size: 0.9rem;
-}
-
-.brush-btn.active {
-  border-color: var(--color-primary);
-  background: rgba(59, 130, 246, 0.2);
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
-}
 
 .calendar-header {
   display: flex;
